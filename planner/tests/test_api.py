@@ -108,3 +108,9 @@ def test_map_page_renders_from_cached_route(api, fake_osrm):
 def test_health(api):
     r = api.get("/api/v1/health/")
     assert r.status_code == 200 and r.json()["stations_loaded"] > 6000
+
+
+@pytest.mark.parametrize("path", ["/api/v1/route", "/api/v1/route/"])
+def test_trailing_slash_is_optional_for_post(api, fake_osrm, path):
+    r = api.post(path, {"start": "New York, NY", "finish": "Los Angeles, CA"}, format="json")
+    assert r.status_code == 200
