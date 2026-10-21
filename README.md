@@ -7,7 +7,7 @@ A Django 6.1 + DRF API that takes a start and finish location in the USA and ret
 * the **total money spent on fuel**.
 
 It makes **one call** to the free routing API per new trip, and **zero** for any trip it has already seen.
-A cross-country request finishes in tens of milliseconds once the route is back.
+Apart from that one routing call, a cross-country plan takes milliseconds once the process is warm.
 
 ```
 POST /api/v1/route/   {"start": "New York, NY", "finish": "Los Angeles, CA"}
@@ -96,8 +96,8 @@ This is the classic *gas station problem*. Two optimisers are implemented in `pl
   fill"* (2007): at every stop an optimal plan either fills the tank or buys just enough to reach the next stop.
   So only O(n·w) fuel states need exploring.
 
-On the offline New York → Los Angeles test route, the pure-cheapest plan is $676.22 with 10 stops. The default plan is **$680.11 with
-6 stops**: four fewer stops for $3.89. The pure-cheapest figure is always returned as
+For New York → Los Angeles, the pure-cheapest plan is $695.44 with **16 stops**. The default plan is **$702.59 with
+6 stops**: ten fewer stops for $7.15. The pure-cheapest figure is always returned as
 `optimisation.absolute_cheapest_plan`, and `stop_penalty: 0` makes it the answer.
 
 The test suite checks both optimisers against an **exhaustive search** on 40 random instances. It also checks that
@@ -121,30 +121,38 @@ easy to derive.
 
 ## Response (abridged)
 
-Numbers below come from the offline test route (straight segments between I-70/I-44/I-40 cities). Real OSRM
-geometry gives slightly different miles and stops.
+A real New York → Los Angeles request (first call, cold cache):
 
 ```json
 {
   "start":  {"query": "New York, NY", "name": "New York, NY", "lat": 40.748, "lon": -73.997, "source": "gazetteer"},
   "finish": {"query": "Los Angeles, CA", "name": "Los Angeles, CA", "lat": 33.973, "lon": -118.248, "source": "gazetteer"},
-  "route":  {"distance_miles": 2776.4, "duration_hours": 46.27, "polyline": "ktuwFlns...", "polyline_precision": 5},
+  "route":  {"distance_miles": 2800.6, "duration_hours": 49.88, "polyline": "...", "polyline_precision": 5},
   "vehicle": {"max_range_miles": 500, "miles_per_gallon": 10, "tank_gallons": 50, "start_fuel_gallons": 50},
   "fuel_stops": [
-    {"stop_number": 1, "mile_marker": 448.3, "distance_from_route_miles": 6.7,
-     "price_per_gallon": 3.059, "gallons": 35.25, "cost": 107.82, "fuel_on_arrival_gallons": 5.17,
-     "station": {"opis_id": 72781, "name": "SHEETZ #774", "address": "I-70 & SR-83",
-                 "city": "New Concord", "state": "OH", "lat": 40.0088, "lon": -81.7387, "location_precision": "city"}}
+    {"stop_number": 1, "mile_marker": 392.1, "distance_from_route_miles": 3.8,
+     "price_per_gallon": 3.059, "gallons": 35.37, "cost": 108.2, "fuel_on_arrival_gallons": 10.79,
+     "station": {"opis_id": 72445, "name": "SHEETZ #639", "address": "I-80 Exit 223",
+                 "city": "Youngstown", "state": "OH", "lat": 41.0986, "lon": -80.6474, "location_precision": "city"}},
+    {"stop_number": 2, "mile_marker": 853.7,  "price_per_gallon": 2.969, "gallons": 48.2,  "cost": 143.11, "station": {"name": "CASEYS #3686", "city": "Utica", "state": "IL"}},
+    {"stop_number": 3, "mile_marker": 1335.8, "price_per_gallon": 2.799, "gallons": 50.0,  "cost": 139.95, "station": {"name": "AKAL TRAVEL CENTER", "city": "Waco", "state": "NE"}},
+    {"stop_number": 4, "mile_marker": 1739.4, "price_per_gallon": 3.149, "gallons": 40.37, "cost": 127.12, "station": {"name": "7-ELEVEN 42279", "city": "Keenesburg", "state": "CO"}},
+    {"stop_number": 5, "mile_marker": 2120.9, "price_per_gallon": 3.282, "gallons": 25.95, "cost": 85.16,  "station": {"name": "MAVERIK COUNTRY STORE #693", "city": "Green River", "state": "UT"}},
+    {"stop_number": 6, "mile_marker": 2498.9, "price_per_gallon": 3.282, "gallons": 30.17, "cost": 99.04,  "station": {"name": "Maverik #674", "city": "North Las Vegas", "state": "NV"}}
   ],
-  "summary": {"total_fuel_cost": 680.11, "total_gallons_purchased": 227.64, "total_gallons_used": 277.64,
-              "number_of_stops": 6, "average_price_paid": 2.988, "fuel_left_at_finish_gallons": 0, "currency": "USD"},
-  "optimisation": {"objective": "minimise fuel cost + stop_penalty x stops", "stop_penalty_usd": 5,
-                   "corridor_miles": 10, "absolute_cheapest_plan": {"total_fuel_cost": 676.22, "number_of_stops": 10}},
-  "meta": {"routing_api_calls": 1, "geocoding_api_calls": 0, "route_from_cache": false, "stations_in_corridor": 339,
-           "timing_ms": {"geocode": 0.0, "route": 1.7, "optimise": 40.5, "total": 42.4}},
+  "summary": {"total_fuel_cost": 702.59, "total_gallons_purchased": 230.06, "total_gallons_used": 280.06,
+              "number_of_stops": 6, "average_price_paid": 3.054, "fuel_left_at_finish_gallons": 0.0, "currency": "USD"},
+  "optimisation": {"objective": "minimise fuel cost + stop_penalty x stops", "stop_penalty_usd": 5.0,
+                   "corridor_miles": 10.0, "absolute_cheapest_plan": {"total_fuel_cost": 695.44, "number_of_stops": 16}},
+  "meta": {"routing_api_calls": 1, "geocoding_api_calls": 0, "route_from_cache": false, "stations_in_corridor": 451,
+           "timing_ms": {"geocode": 136.1, "route": 1338.7, "optimise": 139.8, "total": 1614.7}},
   "map_url": "http://127.0.0.1:8000/map/?start=New+York%2C+NY&finish=Los+Angeles%2C+CA"
 }
 ```
+
+(Stops 2–6 abridged here; the API returns every field for every stop.) Almost all of the 1.6 s is the
+OSRM call plus a one-off load of the station index and gazetteer on the process's first request. Repeat
+trips skip the routing call entirely, and new trips on a warm process spend only milliseconds outside OSRM.
 
 Errors use one shape, `{"error": {"code": "...", "message": "..."}}`:
 `400` invalid input or location outside the USA, `422` no route or a gap with no fuel in range,
