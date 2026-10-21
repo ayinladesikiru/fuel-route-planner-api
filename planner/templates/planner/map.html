@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if result %}{{ result.start.name }} → {{ result.finish.name }} · {% endif %}Fuel Route Planner</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root { --ink:#1c2430; --muted:#5d6b7c; --line:#e3e7ec; --accent:#0b6bcb; --good:#1b8a4b; --bg:#f6f8fa; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  .wrap { display:grid; grid-template-columns: 380px 1fr; height:100vh; }
+  aside { overflow:auto; background:#fff; border-right:1px solid var(--line); padding:20px; }
+  #map { height:100vh; }
+  h1 { font-size:17px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 16px; }
+  .kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+  .kpi { border:1px solid var(--line); border-radius:8px; padding:10px; }
+  .kpi b { display:block; font-size:18px; }
+  .kpi span { color:var(--muted); font-size:12px; }
+  .kpi.total { grid-column: span 2; background:#f0f7ff; border-color:#cfe3f8; }
+  .kpi.total b { font-size:24px; color:var(--accent); }
+  ol { list-style:none; padding:0; margin:0; }
+  li.stop { border-top:1px solid var(--line); padding:10px 0; display:grid; grid-template-columns:28px 1fr auto; gap:8px; cursor:pointer; }
+  .num { width:24px; height:24px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:600; font-size:12px; }
+  .meta { color:var(--muted); font-size:12px; }
+  .price { text-align:right; }
+  .price b { color:var(--good); }
+  .err { margin:40px; padding:16px; background:#fff4f4; border:1px solid #f3c2c2; border-radius:8px; }
+  .pin { width:26px; height:26px; border-radius:50%; color:#fff; display:grid; place-items:center; font:600 12px system-ui; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.35); }
+  .foot { margin-top:16px; color:var(--muted); font-size:12px; }
+  @media (max-width: 800px) { .wrap { grid-template-columns:1fr; grid-template-rows:auto 60vh; height:auto; } #map { height:60vh; } }
+</style>
+</head>
+<body>
+{% if error %}
+  <div class="err"><b>Could not plan this trip.</b><br>{{ error }}</div>
+{% else %}
+<div class="wrap">
+  <aside>
+    <h1>{{ result.start.name }} → {{ result.finish.name }}</h1>
+    <p class="sub">{{ result.route.distance_miles }} mi · {{ result.route.duration_hours }} h driving · {{ result.vehicle.miles_per_gallon|floatformat:0 }} mpg · {{ result.vehicle.max_range_miles|floatformat:0 }} mi range</p>
+    <div class="kpis">
+      <div class="kpi total"><b>${{ result.summary.total_fuel_cost|floatformat:2 }}</b><span>total spent on fuel</span></div>
+      <div class="kpi"><b>{{ result.summary.number_of_stops }}</b><span>fuel stops</span></div>
+      <div class="kpi"><b>{{ result.summary.total_gallons_purchased|floatformat:1 }} gal</b><span>purchased{% if result.summary.average_price_paid %} · avg ${{ result.summary.average_price_paid }}{% endif %}</span></div>
+    </div>
+    <ol>
+      {% for s in result.fuel_stops %}
+      <li class="stop" data-i="{{ forloop.counter0 }}">
+        <div class="num">{{ s.stop_number }}</div>
+        <div><b>{{ s.station.name }}</b><div class="meta">{{ s.station.city }}, {{ s.station.state }} · mile {{ s.mile_marker }}<br>{{ s.station.address }}</div></div>
+        <div class="price"><b>${{ s.price_per_gallon|floatformat:3 }}</b><div class="meta">{{ s.gallons }} gal<br>${{ s.cost|floatformat:2 }}</div></div>
+      </li>
+      {% empty %}
+      <li class="meta">No stop needed: a full tank covers this trip.</li>
+      {% endfor %}
+    </ol>
+    <p class="foot">Grey dots: the {{ result.meta.stations_in_corridor }} stations within reach of the route. Routing © OSRM · Map © OpenStreetMap contributors.</p>
+  </aside>
+  <div id="map"></div>
+</div>
+{{ map_data|json_script:"map-data" }}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  const data = JSON.parse(document.getElementById("map-data").textContent);
+  function decode(str) {
+    let i = 0, lat = 0, lng = 0, out = [];
+    while (i < str.length) {
+      for (const axis of [0, 1]) {
+        let shift = 0, result = 0, b;
+        do { b = str.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+        const d = (result & 1) ? ~(result >> 1) : (result >> 1);
+        if (axis === 0) lat += d; else lng += d;
+      }
+      out.push([lat / 1e5, lng / 1e5]);
+    }
+    return out;
+  }
+  const map = L.map("map");
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18, attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
+  const line = L.polyline(decode(data.polyline), { color: "#0b6bcb", weight: 5, opacity: .85 }).addTo(map);
+  map.fitBounds(line.getBounds(), { padding: [30, 30] });
+
+  data.corridor.forEach(s => L.circleMarker([s.lat, s.lon], {
+    radius: 3, color: "#8795a5", weight: 1, fillOpacity: .5
+  }).bindTooltip(`${s.name} · ${s.city}, ${s.state} · $${s.price}`).addTo(map));
+
+  const pin = (bg, label) => L.divIcon({ className: "", html: `<div class="pin" style="background:${bg}">${label}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] });
+  L.marker([data.start.lat, data.start.lon], { icon: pin("#1b8a4b", "A") }).bindPopup(`<b>Start</b><br>${data.start.name}`).addTo(map);
+  L.marker([data.finish.lat, data.finish.lon], { icon: pin("#c0392b", "B") }).bindPopup(`<b>Finish</b><br>${data.finish.name}`).addTo(map);
+  const markers = data.stops.map(s => L.marker([s.station.lat, s.station.lon], { icon: pin("#0b6bcb", s.stop_number), zIndexOffset: 1000 })
+    .bindPopup(`<b>${s.stop_number}. ${s.station.name}</b><br>${s.station.city}, ${s.station.state}<br>$${s.price_per_gallon}/gal · ${s.gallons} gal · <b>$${s.cost.toFixed(2)}</b><br>mile ${s.mile_marker}`)
+    .addTo(map));
+  document.querySelectorAll("li.stop").forEach(li => li.addEventListener("click", () => {
+    const m = markers[+li.dataset.i]; map.setView(m.getLatLng(), 10); m.openPopup();
+  }));
+})();
+</script>
+{% endif %}
+</body>
+</html>

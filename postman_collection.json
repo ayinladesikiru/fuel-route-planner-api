@@ -1,0 +1,457 @@
+{
+  "info": {
+    "name": "Fuel Route Planner API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Route + cost-optimal fuel stops between two US locations. Open `map_url` from any response in a browser to see the map."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/health/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "health"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('responds fast (< 1.5s)', () => pm.expect(pm.response.responseTime).to.be.below(1500));",
+              "if (b.summary) {",
+              "  pm.test('<= 1 routing API call', () => pm.expect(b.meta.routing_api_calls).to.be.at.most(1));",
+              "  console.log(`Total fuel cost: $${b.summary.total_fuel_cost} over ${b.summary.number_of_stops} stops`);",
+              "  console.log('Map:', b.map_url);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "New York \u2192 Los Angeles (POST)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/route/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "route"
+          ]
+        },
+        "description": "Cross-country trip: several fuel stops.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"New York, NY\",\n  \"finish\": \"Los Angeles, CA\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('responds fast (< 1.5s)', () => pm.expect(pm.response.responseTime).to.be.below(1500));",
+              "if (b.summary) {",
+              "  pm.test('<= 1 routing API call', () => pm.expect(b.meta.routing_api_calls).to.be.at.most(1));",
+              "  console.log(`Total fuel cost: $${b.summary.total_fuel_cost} over ${b.summary.number_of_stops} stops`);",
+              "  console.log('Map:', b.map_url);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Same trip again (served from cache)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/route/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "route"
+          ]
+        },
+        "description": "meta.routing_api_calls is 0 and route_from_cache is true.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"New York, NY\",\n  \"finish\": \"Los Angeles, CA\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('responds fast (< 1.5s)', () => pm.expect(pm.response.responseTime).to.be.below(1500));",
+              "if (b.summary) {",
+              "  pm.test('<= 1 routing API call', () => pm.expect(b.meta.routing_api_calls).to.be.at.most(1));",
+              "  console.log(`Total fuel cost: $${b.summary.total_fuel_cost} over ${b.summary.number_of_stops} stops`);",
+              "  console.log('Map:', b.map_url);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chicago \u2192 Houston (GET)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/route/?start=Chicago, IL&finish=Houston, TX",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "route"
+          ],
+          "query": [
+            {
+              "key": "start",
+              "value": "Chicago, IL"
+            },
+            {
+              "key": "finish",
+              "value": "Houston, TX"
+            }
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('responds fast (< 1.5s)', () => pm.expect(pm.response.responseTime).to.be.below(1500));",
+              "if (b.summary) {",
+              "  pm.test('<= 1 routing API call', () => pm.expect(b.meta.routing_api_calls).to.be.at.most(1));",
+              "  console.log(`Total fuel cost: $${b.summary.total_fuel_cost} over ${b.summary.number_of_stops} stops`);",
+              "  console.log('Map:', b.map_url);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Seattle \u2192 Miami, start with 5 gal, absolute cheapest",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/route/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "route"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"Seattle, WA\",\n  \"finish\": \"Miami, FL\",\n  \"start_fuel_gallons\": 5,\n  \"stop_penalty\": 0\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('responds fast (< 1.5s)', () => pm.expect(pm.response.responseTime).to.be.below(1500));",
+              "if (b.summary) {",
+              "  pm.test('<= 1 routing API call', () => pm.expect(b.meta.routing_api_calls).to.be.at.most(1));",
+              "  console.log(`Total fuel cost: $${b.summary.total_fuel_cost} over ${b.summary.number_of_stops} stops`);",
+              "  console.log('Map:', b.map_url);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Coordinates input + GeoJSON geometry",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/route/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "route"
+          ]
+        },
+        "description": "Denver \u2192 Las Vegas using lat,lon.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"39.7392,-104.9903\",\n  \"finish\": \"36.1699,-115.1398\",\n  \"include_geometry\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('responds fast (< 1.5s)', () => pm.expect(pm.response.responseTime).to.be.below(1500));",
+              "if (b.summary) {",
+              "  pm.test('<= 1 routing API call', () => pm.expect(b.meta.routing_api_calls).to.be.at.most(1));",
+              "  console.log(`Total fuel cost: $${b.summary.total_fuel_cost} over ${b.summary.number_of_stops} stops`);",
+              "  console.log('Map:', b.map_url);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Custom vehicle (300 mi range, 6.5 mpg)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/route/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "route"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"Dallas, TX\",\n  \"finish\": \"Atlanta, GA\",\n  \"max_range_miles\": 300,\n  \"mpg\": 6.5\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('responds fast (< 1.5s)', () => pm.expect(pm.response.responseTime).to.be.below(1500));",
+              "if (b.summary) {",
+              "  pm.test('<= 1 routing API call', () => pm.expect(b.meta.routing_api_calls).to.be.at.most(1));",
+              "  console.log(`Total fuel cost: $${b.summary.total_fuel_cost} over ${b.summary.number_of_stops} stops`);",
+              "  console.log('Map:', b.map_url);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error: location outside USA",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/route/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "route"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"Chicago, IL\",\n  \"finish\": \"51.5072,-0.1276\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('responds fast (< 1.5s)', () => pm.expect(pm.response.responseTime).to.be.below(1500));",
+              "if (b.summary) {",
+              "  pm.test('<= 1 routing API call', () => pm.expect(b.meta.routing_api_calls).to.be.at.most(1));",
+              "  console.log(`Total fuel cost: $${b.summary.total_fuel_cost} over ${b.summary.number_of_stops} stops`);",
+              "  console.log('Map:', b.map_url);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error: validation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/route/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "route"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"Chicago, IL\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('responds fast (< 1.5s)', () => pm.expect(pm.response.responseTime).to.be.below(1500));",
+              "if (b.summary) {",
+              "  pm.test('<= 1 routing API call', () => pm.expect(b.meta.routing_api_calls).to.be.at.most(1));",
+              "  console.log(`Total fuel cost: $${b.summary.total_fuel_cost} over ${b.summary.number_of_stops} stops`);",
+              "  console.log('Map:', b.map_url);",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
