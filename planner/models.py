@@ -17,9 +17,7 @@ class FuelStation(models.Model):
     retail_price = models.DecimalField(max_digits=12, decimal_places=8)
     latitude = models.FloatField()
     longitude = models.FloatField()
-    geocode_precision = models.CharField(
-        max_length=10, choices=GeocodePrecision.choices, default=GeocodePrecision.CITY
-    )
+    geocode_precision = models.CharField(max_length=10, choices=GeocodePrecision.choices, default=GeocodePrecision.CITY)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

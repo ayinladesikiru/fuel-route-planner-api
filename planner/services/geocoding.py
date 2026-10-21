@@ -5,16 +5,16 @@ Order of resolution (cheapest first):
   2. Offline US city gazetteer (29k places)    -> 0 API calls
   3. Nominatim (OpenStreetMap), US-only, cached -> 1 API call, only as fallback
 
-The same gazetteer is used once, at import time, to give every fuel station
-coordinates, so station data never costs an API call either.
+The same gazetteer gives every fuel station its coordinates when the price
+file is loaded, so station data never costs an API call either.
 """
+
 from __future__ import annotations
 
 import csv
 import hashlib
 import logging
 import re
-import threading
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -123,13 +123,9 @@ class Gazetteer:
         return None
 
 
-_gazetteer_lock = threading.Lock()
-
-
 @lru_cache(maxsize=1)
 def get_gazetteer() -> Gazetteer:
-    with _gazetteer_lock:
-        return Gazetteer(settings.FUEL_PLANNER["GAZETTEER_PATH"])
+    return Gazetteer(settings.FUEL_PLANNER["GAZETTEER_PATH"])
 
 
 class Geocoder:

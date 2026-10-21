@@ -16,11 +16,14 @@ GET  /map/?start=New York, NY&finish=Los Angeles, CA        ← interactive Leaf
 GET  /api/v1/health/
 ```
 
+The trailing slash is optional on every endpoint.
+
 ---
 
 ## Quick start
 
-Requires **Python 3.12+** (Django 6.1 requirement).
+Requires **Python 3.12+** (Django 6.1 requirement); tested on 3.13 and 3.14. `uv` works too:
+`uv venv && uv pip install -r requirements-dev.txt`.
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
@@ -40,7 +43,7 @@ curl -s -X POST localhost:8000/api/v1/route/ \
 
 Open the `map_url` from the response in a browser to see the route and stops.
 
-Tests: `pytest` (107 tests, ~2 s, fully offline; the routing API is mocked).
+Tests: `pytest` (109 tests, a few seconds, fully offline; the routing API is mocked).
 Docker: `docker build -t fuel-route . && docker run -p 8000:8000 fuel-route`.
 
 ---
@@ -93,7 +96,7 @@ This is the classic *gas station problem*. Two optimisers are implemented in `pl
   fill"* (2007): at every stop an optimal plan either fills the tank or buys just enough to reach the next stop.
   So only O(n·w) fuel states need exploring.
 
-For New York → Los Angeles the pure-cheapest plan is $676.22 with 10 stops. The default plan is **$680.11 with
+On the offline New York → Los Angeles test route, the pure-cheapest plan is $676.22 with 10 stops. The default plan is **$680.11 with
 6 stops**: four fewer stops for $3.89. The pure-cheapest figure is always returned as
 `optimisation.absolute_cheapest_plan`, and `stop_penalty: 0` makes it the answer.
 
@@ -166,7 +169,7 @@ planner/
     geo.py                  haversine, polyline codec, densify
   views.py / serializers.py DRF endpoints, map view
   templates/planner/map.html  Leaflet map
-  tests/                    107 offline tests
+  tests/                    109 offline tests
 data/                       fuel price CSV, US city gazetteer
 postman_collection.json
 ```
@@ -180,4 +183,4 @@ postman_collection.json
   US extract) for production. No code changes are needed.
 * **Cache** is in-process LocMem. Point `CACHES` at Redis to share routes across workers.
 * The station index loads lazily on the first request (~250 ms) and is reset when prices are re-imported.
-  `gunicorn --preload` plus a warm-up request keeps the first user from paying that cost.
+  A warm-up request (e.g. `/api/v1/health/` plus one trip) after deploy keeps users from paying that cost.

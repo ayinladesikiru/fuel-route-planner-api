@@ -4,6 +4,7 @@ All ~7.5k US stations are loaded from the database once per process into
 numpy arrays. Finding the stations along a route is then a single vectorised
 KD-tree query (milliseconds) instead of thousands of DB or API lookups.
 """
+
 from __future__ import annotations
 
 import threading
@@ -18,18 +19,16 @@ from planner.services.geo import chord_to_miles, miles_to_chord, to_unit_xyz
 
 @dataclass
 class CorridorStation:
-    index: int               # row in the StationIndex arrays
-    mile_marker: float       # distance along the route where it is reached
-    offset_miles: float      # straight-line distance from the route
+    index: int  # row in the StationIndex arrays
+    mile_marker: float  # distance along the route where it is reached
+    offset_miles: float  # straight-line distance from the route
     price: float
 
 
 class StationIndex:
     def __init__(self, rows: list[dict]):
         if not rows:
-            raise StationsNotLoadedError(
-                "No fuel stations loaded. Run: python manage.py load_fuel_stations"
-            )
+            raise StationsNotLoadedError("No fuel stations loaded. Run: python manage.py load_fuel_stations")
         self.rows = rows
         self.lat = np.array([r["latitude"] for r in rows])
         self.lon = np.array([r["longitude"] for r in rows])
@@ -42,7 +41,14 @@ class StationIndex:
 
         rows = list(
             FuelStation.objects.values(
-                "opis_id", "name", "address", "city", "state", "retail_price", "latitude", "longitude",
+                "opis_id",
+                "name",
+                "address",
+                "city",
+                "state",
+                "retail_price",
+                "latitude",
+                "longitude",
                 "geocode_precision",
             )
         )

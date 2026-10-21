@@ -11,7 +11,9 @@ class RouteRequestSerializer(serializers.Serializer):
     )
     corridor_miles = serializers.FloatField(required=False, min_value=0.5, max_value=50)
     stop_penalty = serializers.FloatField(
-        required=False, min_value=0, max_value=500,
+        required=False,
+        min_value=0,
+        max_value=500,
         help_text="USD-equivalent cost of one extra stop (default 5). 0 = absolute cheapest fuel.",
     )
     include_geometry = serializers.BooleanField(required=False, default=False)

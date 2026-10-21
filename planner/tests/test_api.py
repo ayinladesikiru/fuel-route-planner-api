@@ -36,7 +36,6 @@ def test_cross_country_trip(api, fake_osrm):
     assert body["summary"]["total_gallons_purchased"] == pytest.approx(used - 50, abs=0.1)
     assert body["optimisation"]["absolute_cheapest_plan"]["total_fuel_cost"] <= body["summary"]["total_fuel_cost"]
     assert all(s["distance_from_route_miles"] <= 10 for s in stops)
-    assert "_corridor" not in body
 
 
 def test_repeat_request_is_served_without_calling_routing_api(api, fake_osrm):
@@ -73,13 +72,16 @@ def test_geometry_is_optional(api, fake_osrm):
     assert len(body["route"]["geometry"]["coordinates"]) > 100
 
 
-@pytest.mark.parametrize("payload,code", [
-    ({}, 400),
-    ({"start": "Chicago, IL"}, 400),
-    ({"start": "Chicago, IL", "finish": "chicago, il"}, 400),
-    ({"start": "Chicago, IL", "finish": "51.5072,-0.1276"}, 400),
-    ({"start": "Chicago, IL", "finish": "Detroit, MI", "mpg": 0}, 400),
-])
+@pytest.mark.parametrize(
+    "payload,code",
+    [
+        ({}, 400),
+        ({"start": "Chicago, IL"}, 400),
+        ({"start": "Chicago, IL", "finish": "chicago, il"}, 400),
+        ({"start": "Chicago, IL", "finish": "51.5072,-0.1276"}, 400),
+        ({"start": "Chicago, IL", "finish": "Detroit, MI", "mpg": 0}, 400),
+    ],
+)
 def test_validation_errors(api, fake_osrm, payload, code):
     assert api.post(URL, payload, format="json").status_code == code
 

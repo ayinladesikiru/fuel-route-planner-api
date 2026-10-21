@@ -7,6 +7,7 @@
 * Coordinates come from the bundled US city gazetteer (city centroid), so the
   import makes zero external API calls and runs in about a second.
 """
+
 import csv
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -62,9 +63,16 @@ class Command(BaseCommand):
                 if prev is None or price < prev["retail_price"]:
                     rack = row.get("Rack ID", "").strip()
                     best[opis_id] = dict(
-                        opis_id=opis_id, name=row["Truckstop Name"].strip(), address=row["Address"].strip(),
-                        city=row["City"].strip(), state=state, rack_id=int(rack) if rack.isdigit() else None,
-                        retail_price=price, latitude=lat, longitude=lon, geocode_precision=precision,
+                        opis_id=opis_id,
+                        name=row["Truckstop Name"].strip(),
+                        address=row["Address"].strip(),
+                        city=row["City"].strip(),
+                        state=state,
+                        rack_id=int(rack) if rack.isdigit() else None,
+                        retail_price=price,
+                        latitude=lat,
+                        longitude=lon,
+                        geocode_precision=precision,
                     )
 
         with transaction.atomic():
@@ -72,7 +80,9 @@ class Command(BaseCommand):
             FuelStation.objects.bulk_create([FuelStation(**v) for v in best.values()], batch_size=1000)
         reset_station_index()
 
-        self.stdout.write(self.style.SUCCESS(
-            f"Loaded {len(best)} US stations "
-            f"(skipped {skipped_non_us} non-US rows, {unresolved} unresolved cities, {bad} malformed rows)."
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Loaded {len(best)} US stations "
+                f"(skipped {skipped_non_us} non-US rows, {unresolved} unresolved cities, {bad} malformed rows)."
+            )
+        )

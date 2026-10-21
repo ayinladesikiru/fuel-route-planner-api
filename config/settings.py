@@ -4,6 +4,7 @@ Django settings for the Fuel Route Planner API.
 Everything environment-specific is read from environment variables so the
 same settings file works locally, in CI and in a container.
 """
+
 import os
 from pathlib import Path
 

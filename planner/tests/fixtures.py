@@ -4,6 +4,7 @@ Routes are straight segments between interstate waypoint cities, which is
 close enough to real geometry for exercising corridor search and the optimiser
 without network access.
 """
+
 import numpy as np
 
 from planner.services.geo import cumulative_miles, densify, encode_polyline
@@ -11,11 +12,28 @@ from planner.services.geocoding import get_gazetteer
 from planner.services.routing import METERS_PER_MILE
 
 NYC_TO_LA = [
-    ("New York", "NY"), ("Allentown", "PA"), ("Harrisburg", "PA"), ("Breezewood", "PA"),
-    ("Wheeling", "WV"), ("Columbus", "OH"), ("Indianapolis", "IN"), ("Effingham", "IL"),
-    ("St. Louis", "MO"), ("Rolla", "MO"), ("Springfield", "MO"), ("Joplin", "MO"), ("Tulsa", "OK"),
-    ("Oklahoma City", "OK"), ("Amarillo", "TX"), ("Tucumcari", "NM"), ("Albuquerque", "NM"),
-    ("Gallup", "NM"), ("Flagstaff", "AZ"), ("Kingman", "AZ"), ("Needles", "CA"), ("Barstow", "CA"),
+    ("New York", "NY"),
+    ("Allentown", "PA"),
+    ("Harrisburg", "PA"),
+    ("Breezewood", "PA"),
+    ("Wheeling", "WV"),
+    ("Columbus", "OH"),
+    ("Indianapolis", "IN"),
+    ("Effingham", "IL"),
+    ("St. Louis", "MO"),
+    ("Rolla", "MO"),
+    ("Springfield", "MO"),
+    ("Joplin", "MO"),
+    ("Tulsa", "OK"),
+    ("Oklahoma City", "OK"),
+    ("Amarillo", "TX"),
+    ("Tucumcari", "NM"),
+    ("Albuquerque", "NM"),
+    ("Gallup", "NM"),
+    ("Flagstaff", "AZ"),
+    ("Kingman", "AZ"),
+    ("Needles", "CA"),
+    ("Barstow", "CA"),
     ("Los Angeles", "CA"),
 ]
 CHICAGO_TO_DETROIT = [("Chicago", "IL"), ("Gary", "IN"), ("Kalamazoo", "MI"), ("Ann Arbor", "MI"), ("Detroit", "MI")]
@@ -31,11 +49,13 @@ def osrm_payload(waypoints, road_factor=1.08, mph=60.0) -> dict:
     miles = cumulative_miles(pts)[-1] * road_factor
     return {
         "code": "Ok",
-        "routes": [{
-            "distance": miles * METERS_PER_MILE,
-            "duration": miles / mph * 3600,
-            "geometry": encode_polyline(pts),
-        }],
+        "routes": [
+            {
+                "distance": miles * METERS_PER_MILE,
+                "duration": miles / mph * 3600,
+                "geometry": encode_polyline(pts),
+            }
+        ],
     }
 
 

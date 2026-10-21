@@ -1,4 +1,5 @@
 """Small, dependency-light geometry helpers (all distances in statute miles)."""
+
 from __future__ import annotations
 
 import numpy as np

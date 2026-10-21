@@ -32,9 +32,8 @@ def brute_force_integer(stations, total, tank, start):
         if pos[i] + fuel >= total:
             return 0.0
         options = []
-        lo = 0 if price[i] is not None else 0
-        hi = (tank - fuel) if price[i] is not None else 0
-        for buy in range(lo, hi + 1):
+        max_buy = (tank - fuel) if price[i] is not None else 0  # nothing to buy at the origin
+        for buy in range(max_buy + 1):
             f = fuel + buy
             cost = buy * (price[i] or 0)
             if pos[i] + f >= total:
@@ -114,5 +113,5 @@ def test_stop_penalty_never_adds_stops_and_stays_feasible(seed):
     pen = plan_fuel_stops_dp(stations, total, 50, 10, 50, stop_penalty=10)
     simulate(pen, total, 50, 10, 50)
     assert len(pen.purchases) <= len(greedy.purchases)
-    assert pen.total_cost >= greedy.total_cost - 1e-6               # greedy is the dollar optimum
+    assert pen.total_cost >= greedy.total_cost - 1e-6  # greedy is the dollar optimum
     assert pen.total_cost + 10 * len(pen.purchases) <= greedy.total_cost + 10 * len(greedy.purchases) + 1e-6

@@ -5,13 +5,16 @@ from planner.services.geocoding import Geocoder
 from planner.tests.fixtures import FakeSession
 
 
-@pytest.mark.parametrize("text,expected_name", [
-    ("Chicago, IL", "Chicago, IL"),
-    ("chicago, illinois", "Chicago, IL"),
-    ("Salt Lake City UT", "Salt Lake City, UT"),
-    ("St. Louis, MO, USA", "Saint Louis, MO"),
-    ("Fort Worth, TX", "Fort Worth, TX"),
-])
+@pytest.mark.parametrize(
+    "text,expected_name",
+    [
+        ("Chicago, IL", "Chicago, IL"),
+        ("chicago, illinois", "Chicago, IL"),
+        ("Salt Lake City UT", "Salt Lake City, UT"),
+        ("St. Louis, MO, USA", "Saint Louis, MO"),
+        ("Fort Worth, TX", "Fort Worth, TX"),
+    ],
+)
 def test_offline_gazetteer_needs_no_api_call(text, expected_name):
     g = Geocoder(session=FakeSession([]))
     place = g.geocode(text)

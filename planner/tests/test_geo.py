@@ -31,9 +31,15 @@ def test_densify_preserves_length_and_limits_step():
     assert cumulative_miles(dense)[-1] == pytest.approx(cumulative_miles(pts)[-1], rel=1e-3)
 
 
-@pytest.mark.parametrize("lat,lon,expected", [
-    (41.88, -87.63, True), (61.2, -149.9, True), (21.3, -157.8, True),
-    (19.43, -99.13, False), (51.5, -0.12, False),
-])
+@pytest.mark.parametrize(
+    "lat,lon,expected",
+    [
+        (41.88, -87.63, True),
+        (61.2, -149.9, True),
+        (21.3, -157.8, True),
+        (19.43, -99.13, False),
+        (51.5, -0.12, False),
+    ],
+)
 def test_is_in_usa(lat, lon, expected):
     assert is_in_usa(lat, lon) is expected

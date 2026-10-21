@@ -5,6 +5,7 @@ Uses the free OSRM demo server (no API key). A single ``/route`` request with
 everything the planner needs. Responses are cached, so re-running a trip or
 opening its map costs zero further calls.
 """
+
 from __future__ import annotations
 
 import logging
@@ -27,8 +28,8 @@ METERS_PER_MILE = 1609.344
 class Route:
     distance_miles: float
     duration_hours: float
-    polyline: str          # encoded polyline (precision 5), compact for clients
-    points: np.ndarray     # (n, 2) [lat, lon]
+    polyline: str  # encoded polyline (precision 5), compact for clients
+    points: np.ndarray  # (n, 2) [lat, lon]
     from_cache: bool = False
 
 
@@ -63,7 +64,9 @@ class OSRMClient:
         self.api_calls += 1
         try:
             resp = self.session.get(
-                url, params=params, headers={"User-Agent": self.cfg["HTTP_USER_AGENT"]},
+                url,
+                params=params,
+                headers={"User-Agent": self.cfg["HTTP_USER_AGENT"]},
                 timeout=self.cfg["HTTP_TIMEOUT_SECONDS"],
             )
             payload = resp.json()
